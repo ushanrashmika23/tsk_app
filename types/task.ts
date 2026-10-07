@@ -4,6 +4,7 @@ export interface Task {
   id: string;
   title: string;
   description: string | null;
+  project_id: string | null;
   scheduled_date: string; // YYYY-MM-DD
   scheduled_time: string | null; // HH:MM
   priority: Priority;
@@ -16,6 +17,7 @@ export interface Task {
 
 export interface TaskInput {
   title: string;
+  project_id?: string | null;
   description?: string;
   scheduled_date: string;
   scheduled_time?: string;

@@ -9,16 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
+    "framer-motion": "^14.0.0",
+    "groq-sdk": "^0.3.2",
+    "lucide-react": "latest",
     "next": "latest",
+    "next-themes": "^0.4.6",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest",
+    "tailwind-merge": "^3.7.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.1",
-    "@cloudflare/workers-types": "^5.20240320.0",
-    "wrangler": "^3.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, CheckSquare, Settings, Sun } from "lucide-react";
+import { Calendar, CheckSquare, Settings, Sun, LogOut, Bot, Target, Folder } from "lucide-react";
+import { logoutAction } from "@/app/actions";
 
 export default function Navigation({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
@@ -11,6 +12,9 @@ export default function Navigation({ mobile = false }: { mobile?: boolean }) {
     { href: "/", label: "Today", icon: Sun },
     { href: "/tasks", label: "Tasks", icon: CheckSquare },
     { href: "/schedule", label: "Schedule", icon: Calendar },
+    { href: "/projects", label: "Projects", icon: Folder },
+    { href: "/goals", label: "Goals", icon: Target },
+    { href: "/ai", label: "AI", icon: Bot },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
@@ -24,41 +28,59 @@ export default function Navigation({ mobile = false }: { mobile?: boolean }) {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${
-                isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
-              }`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${isActive
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                }`}
             >
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
               <span className="text-[10px] font-medium">{link.label}</span>
             </Link>
           );
         })}
+        <form action={logoutAction} className="flex flex-col items-center gap-1 p-2 rounded-xl text-red-500 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
+          <button type="submit" className="flex flex-col items-center gap-1">
+            <LogOut size={24} strokeWidth={2} />
+            <span className="text-[10px] font-medium">Logout</span>
+          </button>
+        </form>
       </nav>
     );
   }
 
   return (
-    <nav className="flex flex-col gap-2">
-      {links.map((link) => {
-        const Icon = link.icon;
-        const isActive = pathname === link.href;
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-              isActive
+    <div className="flex flex-col justify-between h-full">
+      <nav className="flex flex-col gap-2">
+        {links.map((link) => {
+          const Icon = link.icon;
+          const isActive = pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${isActive
                 ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm font-medium"
                 : "text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800/50"
-            }`}
+                }`}
+            >
+              <Icon size={20} />
+              <span>{link.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="mt-8">
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium"
           >
-            <Icon size={20} />
-            <span>{link.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

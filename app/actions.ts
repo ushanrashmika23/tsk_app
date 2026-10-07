@@ -51,3 +51,11 @@ export async function removeTaskAction(id: string) {
     return { success: false, error: e.message };
   }
 }
+
+export async function logoutAction() {
+  const { cookies } = await import("next/headers");
+  const { redirect } = await import("next/navigation");
+  const cookieStore = await cookies();
+  cookieStore.delete("auth_token");
+  redirect("/login");
+}

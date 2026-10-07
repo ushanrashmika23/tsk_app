@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { submitTaskAction, editTaskAction, removeTaskAction } from "@/app/actions";
+import { getProjectsAction } from "@/app/projects/actions";
 import { Task, TaskInput, Priority } from "@/types/task";
-import { X, Trash2 } from "lucide-react";
+import { Project } from "@/types/project";
+import { X, Trash2, Folder } from "lucide-react";
 
 interface TaskFormProps {
   initialData?: Task;
@@ -18,7 +20,13 @@ export function TaskForm({ initialData, onClose, defaultDate }: TaskFormProps) {
   const [time, setTime] = useState(initialData?.scheduled_time || "");
   const [priority, setPriority] = useState<Priority>(initialData?.priority || "medium");
   const [category, setCategory] = useState(initialData?.category || "");
+  const [projectId, setProjectId] = useState(initialData?.project_id || "");
   const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    getProjectsAction().then(setProjects);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +36,7 @@ export function TaskForm({ initialData, onClose, defaultDate }: TaskFormProps) {
     const input: TaskInput = {
       title,
       description,
+      project_id: projectId || null,
       scheduled_date: date,
       scheduled_time: time || undefined,
       priority,
@@ -103,7 +112,7 @@ export function TaskForm({ initialData, onClose, defaultDate }: TaskFormProps) {
                 required
               />
             </div>
-            
+
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Time (Opt)</label>
               <input
@@ -116,6 +125,20 @@ export function TaskForm({ initialData, onClose, defaultDate }: TaskFormProps) {
           </div>
 
           <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1"><Folder size={12}/> Project (Opt)</label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="px-4 py-3 bg-gray-50 dark:bg-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/50 text-sm"
+            >
+              <option value="">No Project</option>
+              {projects.filter(p => p.status === 'active').map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</label>
             <div className="flex gap-2">
               {(["low", "medium", "high"] as Priority[]).map((p) => (
@@ -123,13 +146,12 @@ export function TaskForm({ initialData, onClose, defaultDate }: TaskFormProps) {
                   key={p}
                   type="button"
                   onClick={() => setPriority(p)}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    priority === p 
-                      ? p === "high" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-900/50" 
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${priority === p
+                    ? p === "high" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-900/50"
                       : p === "medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50"
-                      : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50"
-                      : "bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 border border-transparent hover:bg-gray-100 dark:hover:bg-zinc-700"
-                  }`}
+                        : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50"
+                    : "bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 border border-transparent hover:bg-gray-100 dark:hover:bg-zinc-700"
+                    }`}
                 >
                   {p.charAt(0).toUpperCase() + p.slice(1)}
                 </button>

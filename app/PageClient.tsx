@@ -20,7 +20,7 @@ export function PageClient({ initialTasks, todayDate }: { initialTasks: Task[], 
         {initialTasks.length === 0 ? (
           <div className="bg-white dark:bg-zinc-800 p-8 rounded-2xl border border-gray-100 dark:border-zinc-800/50 text-center">
             <p className="text-gray-500 font-medium">You're all caught up.</p>
-            <button 
+            <button
               onClick={() => setIsAdding(true)}
               className="mt-4 text-blue-600 dark:text-blue-400 font-medium hover:underline"
             >
@@ -36,19 +36,19 @@ export function PageClient({ initialTasks, todayDate }: { initialTasks: Task[], 
 
       <button
         onClick={() => setIsAdding(true)}
-        className="fixed md:absolute bottom-24 md:bottom-8 right-6 md:right-8 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 z-40"
+        className="fixed bottom-24 md:bottom-8 right-6 md:right-8 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 z-40"
       >
         <Plus size={28} />
       </button>
 
       {(isAdding || editingTask) && (
-        <TaskForm 
-          initialData={editingTask || undefined} 
+        <TaskForm
+          initialData={editingTask || undefined}
           defaultDate={todayDate}
           onClose={() => {
             setIsAdding(false);
             setEditingTask(null);
-          }} 
+          }}
         />
       )}
     </>

@@ -25,6 +25,22 @@ export async function getUpcomingTasks(fromDate: string): Promise<Task[]> {
   return result.results || [];
 }
 
+export async function getTasksByProject(projectId: string): Promise<Task[]> {
+  const db = getDb();
+  const result = await db.prepare(
+    "SELECT * FROM tasks WHERE project_id = ? ORDER BY completed ASC, scheduled_date ASC, priority DESC"
+  ).bind(projectId).all<Task>();
+  return result.results || [];
+}
+
+export async function getTasksWithoutProject(): Promise<Task[]> {
+  const db = getDb();
+  const result = await db.prepare(
+    "SELECT * FROM tasks WHERE project_id IS NULL ORDER BY completed ASC, scheduled_date ASC, priority DESC"
+  ).all<Task>();
+  return result.results || [];
+}
+
 export async function createTask(input: TaskInput): Promise<Task> {
   const db = getDb();
   const now = new Date().toISOString();
@@ -33,12 +49,13 @@ export async function createTask(input: TaskInput): Promise<Task> {
   const id = crypto.randomUUID();
 
   await db.prepare(`
-    INSERT INTO tasks (id, title, description, scheduled_date, scheduled_time, priority, category, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tasks (id, title, description, project_id, scheduled_date, scheduled_time, priority, category, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
     input.title,
     input.description || null,
+    input.project_id || null,
     input.scheduled_date,
     input.scheduled_time || null,
     input.priority || 'medium',
@@ -65,11 +82,12 @@ export async function updateTask(id: string, updates: Partial<TaskInput>): Promi
   
   await db.prepare(`
     UPDATE tasks 
-    SET title = ?, description = ?, scheduled_date = ?, scheduled_time = ?, priority = ?, category = ?, updated_at = ?
+    SET title = ?, description = ?, project_id = ?, scheduled_date = ?, scheduled_time = ?, priority = ?, category = ?, updated_at = ?
     WHERE id = ?
   `).bind(
     updates.title ?? current.title,
     updates.description !== undefined ? updates.description : current.description,
+    updates.project_id !== undefined ? updates.project_id : current.project_id,
     updates.scheduled_date ?? current.scheduled_date,
     updates.scheduled_time !== undefined ? updates.scheduled_time : current.scheduled_time,
     updates.priority ?? current.priority,

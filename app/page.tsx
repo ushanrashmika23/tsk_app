@@ -12,9 +12,9 @@ export default async function Home() {
   // Ideally, we'd pass the client timezone, but for simplicity we'll use server date or let client fetch it.
   // For this app, let's just use the server's current date.
   const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
-  
+
   const tasks = await getTasksForDate(today);
-  
+
   const remaining = tasks.filter(t => t.completed === 0).length;
   const completed = tasks.filter(t => t.completed === 1).length;
 
@@ -25,7 +25,7 @@ export default async function Home() {
         <p className="text-gray-500 dark:text-zinc-400 mt-1">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
-        
+
         <div className="flex gap-4 mt-6">
           <div className="bg-white dark:bg-zinc-800 p-4 rounded-2xl flex-1 border border-gray-100 dark:border-zinc-800/50 shadow-sm">
             <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{remaining}</div>

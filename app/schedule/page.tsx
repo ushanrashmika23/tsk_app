@@ -1,12 +1,11 @@
-import { getUpcomingTasks } from "@/lib/db/tasks";
+import { getAllTasks } from "@/lib/db/tasks";
 import { ScheduleClient } from "./ScheduleClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
-  const today = new Date().toLocaleDateString('en-CA');
-  const tasks = await getUpcomingTasks(today);
-  
+  const tasks = await getAllTasks();
+
   return (
     <div className="flex flex-col gap-6">
       <header className="pt-4 pb-2">
