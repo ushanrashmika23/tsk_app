@@ -30,5 +30,13 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "wrangler": {
+      "@cloudflare/workers-types": "^5.20240320.0"
+    },
+    "@cloudflare/next-on-pages": {
+      "@cloudflare/workers-types": "^5.20240320.0"
+    }
   }
 }
