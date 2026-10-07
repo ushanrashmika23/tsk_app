@@ -1,0 +1,10 @@
+name = "schedule-app"
+compatibility_date = "2024-03-20"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tsk-ur23"
+database_id = "2207c0fa-0f6e-4ccc-b0bc-f89671d3d2e9"
+migrations_dir = "migrations"
