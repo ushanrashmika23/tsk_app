@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { useUserName } from "@/lib/userName";
+import { getGreeting } from "@/lib/greetings";
 
 /**
  * Only user and assistant prose is kept here.
@@ -24,6 +26,8 @@ function isChatMessage(value: unknown): value is ChatMessage {
 }
 
 export function AIClient() {
+  const { name: userName } = useUserName();
+  const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +35,12 @@ export function AIClient() {
   /** Text of the turn that failed, so it can be retried without retyping. */
   const [failedText, setFailedText] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const dynamicGreeting = mounted ? getGreeting({ name: userName || null }) : "Good day";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -120,7 +130,7 @@ export function AIClient() {
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mb-6">
               <Bot size={32} />
             </div>
-            <h2 className="text-xl font-semibold mb-2">How can I help with your schedule?</h2>
+            <h2 className="text-xl font-semibold mb-2">{dynamicGreeting}! How can I help?</h2>
             <p className="text-gray-500 dark:text-zinc-400 max-w-sm mb-8">
               Ask about your day, create new tasks naturally, or have me summarize your upcoming schedule.
             </p>

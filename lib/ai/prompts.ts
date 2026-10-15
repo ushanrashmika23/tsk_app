@@ -84,6 +84,8 @@ const INTENT_NOTES: Partial<Record<AIIntent, string>> = {
     "Consult today's tasks, upcoming schedule and active goals before recommending. Order suggestions by real priority and deadlines, and say what each recommendation is based on.",
   goal_management:
     "Goal progress is the stored value in the database. Never estimate it, and never present a task-derived ratio as the goal's recorded progress.",
+  greeting:
+    "The user sent a greeting or pleasantry. Respond with a warm, concise greeting suited to the current time of day in their timezone, and briefly ask how you can help with their schedule or tasks.",
 };
 
 /**
