@@ -20,8 +20,14 @@ export async function middleware(request: NextRequest) {
 
   const authCookie = request.cookies.get('auth_token')?.value;
   const isAuthenticated = authCookie === expectedToken && password !== undefined;
+  const isApiRequest = request.nextUrl.pathname.startsWith('/api');
 
   if (!isAuthenticated && !isLoginPage) {
+    // API callers expect a status code, not an HTML login page. Returning the
+    // redirect here would hand a fetch() a 200 full of markup.
+    if (isApiRequest) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -36,11 +42,13 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     *
+     * `/api` is deliberately NOT excluded: the AI endpoint reads and writes the
+     * user's data, so it has to sit behind the same authentication as the pages.
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

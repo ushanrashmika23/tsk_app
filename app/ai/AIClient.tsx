@@ -1,18 +1,35 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Bot, User, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 
-type Message = {
-  role: "user" | "assistant" | "system" | "tool";
-  content: string | null;
-  name?: string;
-};
+/**
+ * Only user and assistant prose is kept here.
+ *
+ * The previous version stored the server's raw message array, which included
+ * assistant turns whose only purpose was to request tools (`content: null`)
+ * while their matching `tool` results were filtered out. Re-sending that
+ * history produced a malformed request, so this component now round-trips
+ * exactly what the server returns and nothing else.
+ */
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
+/** Client-side cap; the server enforces its own limit as well. */
+const HISTORY_LIMIT = 40;
+
+function isChatMessage(value: unknown): value is ChatMessage {
+  if (!value || typeof value !== "object") return false;
+  const { role, content } = value as { role?: unknown; content?: unknown };
+  return (role === "user" || role === "assistant") && typeof content === "string" && content.trim() !== "";
+}
 
 export function AIClient() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  /** Text of the turn that failed, so it can be retried without retyping. */
+  const [failedText, setFailedText] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -21,40 +38,71 @@ export function AIClient() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading, error]);
 
-  const sendMessage = async (text: string) => {
-    if (!text.trim() || isLoading) return;
+  const runTurn = async (baseHistory: ChatMessage[], text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || isLoading) return;
 
-    const userMessage: Message = { role: "user", content: text };
-    const currentMessages = [...messages, userMessage];
+    const userMessage: ChatMessage = { role: "user", content: trimmed };
+    const withUser = [...baseHistory, userMessage];
 
-    setMessages(currentMessages);
+    setMessages(withUser);
     setInput("");
     setIsLoading(true);
+    setError(null);
+    setFailedText(null);
 
     try {
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: currentMessages }),
+        body: JSON.stringify({ messages: withUser.slice(-HISTORY_LIMIT) }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch response");
+      let data: unknown = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
       }
 
-      setMessages(data.messages.filter((m: any) => m.role !== "system" && m.role !== "tool"));
-    } catch (error: any) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: error.message || "I encountered an error connecting to my brain." },
-      ]);
+      if (!response.ok) {
+        // The turn did not happen. Say so, and offer a retry rather than
+        // rendering a fake assistant reply into the conversation.
+        const message =
+          (data as { error?: string } | null)?.error ?? `The assistant request failed (HTTP ${response.status}).`;
+        setError(message);
+        setFailedText(trimmed);
+        return;
+      }
+
+      const incoming = (data as { messages?: unknown } | null)?.messages;
+      const cleaned = Array.isArray(incoming) ? incoming.filter(isChatMessage) : null;
+      if (!cleaned || cleaned.length === 0) {
+        setError("The assistant returned an unreadable response.");
+        setFailedText(trimmed);
+        return;
+      }
+
+      setMessages(cleaned);
+    } catch {
+      setError("Could not reach the assistant. Check your connection and try again.");
+      setFailedText(trimmed);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const sendMessage = (text: string) => {
+    void runTurn(messages, text);
+  };
+
+  const retryLast = () => {
+    if (!failedText) return;
+    // The failed user message is already on screen; drop it from the base so
+    // the retry does not send it twice.
+    void runTurn(messages.slice(0, -1), failedText);
   };
 
   const quickActions = [
@@ -89,7 +137,7 @@ export function AIClient() {
             </div>
           </div>
         ) : (
-          messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, i) => (
+          messages.map((msg, i) => (
             <div
               key={i}
               className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
@@ -110,6 +158,26 @@ export function AIClient() {
           ))
         )}
 
+        {error && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm">
+              <p className="font-medium">That didn&apos;t go through.</p>
+              <p className="mt-1 opacity-90">{error}</p>
+            </div>
+            {failedText && (
+              <button
+                onClick={retryLast}
+                disabled={isLoading}
+                className="flex items-center gap-1.5 text-sm font-medium underline underline-offset-2 disabled:opacity-50 shrink-0"
+              >
+                <RotateCcw size={14} />
+                Retry
+              </button>
+            )}
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex gap-4 flex-row">
             <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
@@ -117,7 +185,7 @@ export function AIClient() {
             </div>
             <div className="px-4 py-3 rounded-2xl bg-gray-100 dark:bg-zinc-800 rounded-tl-none flex items-center gap-2 text-gray-500">
               <Loader2 size={16} className="animate-spin" />
-              <span className="text-sm font-medium">Thinking...</span>
+              <span className="text-sm font-medium">Checking your schedule...</span>
             </div>
           </div>
         )}
